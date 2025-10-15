@@ -9,7 +9,7 @@ services:
     env_file: ${ABSOLUTE_PATH}/data/traefik/.env
     hostname: ${SERVICES_TRAEFIK_HOSTNAME:-traefik}
     healthcheck:
-      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      test: [ "CMD", "traefik", "healthcheck", "--ping" ]
       timeout: 1s
       interval: 10s
       retries: 3
@@ -47,6 +47,10 @@ services:
         target: 443
         published: "443"
         protocol: tcp
+      - mode: host
+        target: 443
+        published: "443"
+        protocol: udp
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
