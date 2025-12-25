@@ -47,6 +47,10 @@ services:
         target: 443
         published: "443"
         protocol: tcp
+      - mode: host
+        target: 443
+        published: "443"
+        protocol: udp
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
