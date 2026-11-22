@@ -3,4 +3,5 @@ include:
   - compose/socket-proxy.yml
   - compose/traefik-crowdsec-bouncer.yml
   - compose/traefik.yml
+  - compose/authelia.yml
   - compose/networks.yml

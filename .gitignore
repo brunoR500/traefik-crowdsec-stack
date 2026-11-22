@@ -69,3 +69,10 @@ data/crowdsec/data
 data/traefik/traefik.yml
 data/traefik/dynamic_conf/*.yml
 data/traefik/dynamic_conf/*.yaml
+
+# Authelia
+data/authelia/config/configuration.yml
+data/authelia/config/users_database.yml
+data/authelia/secrets/
+data/authelia/database/
+data/authelia/notification/

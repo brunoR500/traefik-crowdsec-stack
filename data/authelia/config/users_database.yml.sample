@@ -1,0 +1,15 @@
+# Copy this file to users_database.yml and replace the placeholder hash.
+#
+# Generate a hash with:
+#   docker run --rm -it authelia/authelia:latest authelia crypto hash generate argon2
+#
+# Paste the full "Digest: $argon2id$v=19$..." value into the password field.
+
+users:
+  admin:
+    disabled: false
+    displayname: "Admin"
+    password: "$argon2id$v=19$m=65536,t=3,p=4$REPLACE_WITH_YOUR_COMPLETE_HASH"
+    email: "admin@yourdomain.com"
+    groups:
+      - admins
