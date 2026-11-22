@@ -204,6 +204,70 @@ docker compose up -d
 
 ### 12. Zugriff auf das Traefik-Dashboard
 
-Das Traefik-Dashboard sollte nun über die von Ihnen konfigurierte Domain erreichbar sein. Sie werden zur Eingabe des HTTP-Basic-Auth-Benutzernamens und Passworts aufgefordert.
+Das Traefik-Dashboard sollte nun über die von Ihnen konfigurierte Domain erreichbar sein. Sie werden zur Authelia-Anmeldung (Benutzername + Passwort + TOTP-Code) weitergeleitet.
 
 https://traefik.yourdomain.com
+
+---
+
+## Authelia (2FA)
+
+Authelia ergänzt den Stack um echte Zwei-Faktor-Authentifizierung. Das
+Traefik-Dashboard (und jeder Dienst, der die Middleware `authelia@docker`
+verwendet) verlangt dann Benutzername + Passwort + TOTP-Code.
+
+Ablauf:
+
+```text
+Internet -> Traefik -> CrowdSec Bouncer -> Authelia (Login + TOTP) -> Dienst
+```
+
+### 1. Vorlagen + Geheimnisse anlegen
+
+`first_install.sh` kopiert die Authelia-Vorlagen und erzeugt die Geheimnisse
+automatisch. Für eine nachträgliche Einrichtung:
+
+```bash
+cp data/authelia/config/configuration.yml.sample data/authelia/config/configuration.yml
+cp data/authelia/config/users_database.yml.sample data/authelia/config/users_database.yml
+
+mkdir -p data/authelia/secrets data/authelia/database data/authelia/notification
+openssl rand -hex 64 > data/authelia/secrets/session_secret
+openssl rand -hex 64 > data/authelia/secrets/storage_encryption_key
+openssl rand -hex 64 > data/authelia/secrets/jwt_secret
+chmod 600 data/authelia/secrets/*
+```
+
+### 2. DNS + Domains setzen
+
+- A/AAAA-Record für `auth.yourdomain.com` anlegen.
+- In `.env` `SERVICES_AUTHELIA_LABELS_AUTHELIA_HOST` setzen.
+- In `configuration.yml` alle `yourdomain.com`-Platzhalter ersetzen.
+
+### 3. Benutzer anlegen
+
+```bash
+docker run --rm -it authelia/authelia:latest authelia crypto hash generate argon2
+```
+
+Den vollständigen `Digest:`-Wert in `users_database.yml` eintragen.
+
+### 4. Starten + TOTP registrieren
+
+```bash
+docker compose up -d
+docker compose logs -f authelia
+```
+
+Danach `https://traefik.yourdomain.com` öffnen, einloggen und den
+Registrierungslink aus `data/authelia/notification/notification.txt` mit einer
+Authenticator-App scannen.
+
+### Weitere Dienste schützen
+
+1. `authelia@docker` zur Middleware des Routers hinzufügen.
+2. Passende `two_factor`-Regel unter `access_control.rules` in
+   `configuration.yml` ergänzen.
+3. `docker compose up -d`.
+
+Details: `data/authelia/README.md`.
