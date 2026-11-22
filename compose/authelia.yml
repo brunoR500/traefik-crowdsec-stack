@@ -1,0 +1,31 @@
+services:
+  authelia:
+    container_name: ${SERVICES_AUTHELIA_CONTAINER_NAME:-authelia}
+    image: ${SERVICES_AUTHELIA_IMAGE:-authelia/authelia}:${SERVICES_AUTHELIA_IMAGE_VERSION:-latest}
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-Europe/Berlin}
+      AUTHELIA_SESSION_SECRET_FILE: /secrets/session_secret
+      AUTHELIA_STORAGE_ENCRYPTION_KEY_FILE: /secrets/storage_encryption_key
+      AUTHELIA_IDENTITY_VALIDATION_RESET_PASSWORD_JWT_SECRET_FILE: /secrets/jwt_secret
+    volumes:
+      - ${ABSOLUTE_PATH}/data/authelia/config:/config
+      - ${ABSOLUTE_PATH}/data/authelia/secrets:/secrets:ro
+      - ${ABSOLUTE_PATH}/data/authelia/database:/database
+      - ${ABSOLUTE_PATH}/data/authelia/notification:/notification
+    networks:
+      - proxy
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.authelia.entrypoints: websecure
+      traefik.http.routers.authelia.rule: ${SERVICES_AUTHELIA_LABELS_AUTHELIA_HOST:-HOST(`auth.yourdomain.com`)}
+      traefik.http.routers.authelia.tls: "true"
+      traefik.http.routers.authelia.tls.certresolver: tls_resolver
+      traefik.http.services.authelia.loadbalancer.server.port: "9091"
+
+      # Reusable ForwardAuth middleware for protecting other routers
+      traefik.http.middlewares.authelia.forwardauth.address: http://authelia:9091/api/authz/forward-auth
+      traefik.http.middlewares.authelia.forwardauth.trustForwardHeader: "true"
+      traefik.http.middlewares.authelia.forwardauth.authResponseHeaders: Remote-User,Remote-Groups,Remote-Email,Remote-Name

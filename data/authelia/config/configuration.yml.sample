@@ -1,0 +1,72 @@
+theme: auto
+
+server:
+  address: "tcp://0.0.0.0:9091"
+  endpoints:
+    authz:
+      forward-auth:
+        implementation: "ForwardAuth"
+        authn_strategies:
+          - name: "CookieSession"
+
+log:
+  level: info
+
+totp:
+  issuer: "yourdomain.com"
+  period: 30
+  skew: 1
+
+authentication_backend:
+  password_reset:
+    disable: true
+  file:
+    path: /config/users_database.yml
+    watch: true
+
+access_control:
+  default_policy: deny
+
+  rules:
+    # Allow access to Authelia itself (prevents an auth loop).
+    - domain: "auth.yourdomain.com"
+      policy: bypass
+
+    # Traefik dashboard requires password + TOTP.
+    - domain: "traefik.yourdomain.com"
+      policy: two_factor
+
+    # Add a two_factor rule for every other service that uses the
+    # authelia@docker middleware, e.g.:
+    #
+    # - domain: "sync.yourdomain.com"
+    #   policy: two_factor
+    #
+    # - domain: "nt.yourdomain.com"
+    #   policy: two_factor
+
+session:
+  name: authelia_session
+  cookies:
+    - domain: "yourdomain.com"
+      authelia_url: "https://auth.yourdomain.com"
+      default_redirection_url: "https://traefik.yourdomain.com"
+  expiration: 1h
+  inactivity: 15m
+  remember_me: 1M
+
+regulation:
+  max_retries: 5
+  find_time: 2m
+  ban_time: 10m
+
+storage:
+  local:
+    path: /database/db.sqlite3
+
+notifier:
+  filesystem:
+    filename: /notification/notification.txt
+
+identity_validation:
+  reset_password: {}

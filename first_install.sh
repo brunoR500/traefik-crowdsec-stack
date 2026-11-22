@@ -17,7 +17,7 @@ step_done() {
 }
 
 # Gesamtschritte für das Skript festlegen
-total_steps=18
+total_steps=20
 current_step=1
 
 # Setze das Arbeitsverzeichnis auf das Verzeichnis, in dem das Skript liegt
@@ -101,6 +101,8 @@ files_to_copy=(
   "data/traefik/dynamic_conf/http.middlewares.traefik-dashboard-auth.yml.sample data/traefik/dynamic_conf/http.middlewares.traefik-dashboard-auth.yml"
   "data/traefik/dynamic_conf/tls.yml.sample data/traefik/dynamic_conf/tls.yml"
   "data/traefik-crowdsec-bouncer/.env.sample data/traefik-crowdsec-bouncer/.env"
+  "data/authelia/config/configuration.yml.sample data/authelia/config/configuration.yml"
+  "data/authelia/config/users_database.yml.sample data/authelia/config/users_database.yml"
 )
 
 # Dateien kopieren oder das Skript beenden, wenn eine .sample Datei fehlt
@@ -161,6 +163,16 @@ sleep 3
 BOUNCER_KEY_FIREWALL_PASSWORD=$(openssl rand -base64 48 | tr -dc 'a-zA-Z0-9!@#$%^&*()-_=+[]{}<>?|')
 echo "BOUNCER_KEY_FIREWALL=$BOUNCER_KEY_FIREWALL_PASSWORD" >> ${SCRIPT_DIR}/.env
 step_done "Bouncer-Passwörter generiert"
+((current_step++))
+
+# Authelia-Geheimnisse generieren
+show_step $current_step $total_steps "Generiere Authelia-Geheimnisse"
+mkdir -p data/authelia/secrets data/authelia/database data/authelia/notification
+openssl rand -hex 64 > data/authelia/secrets/session_secret
+openssl rand -hex 64 > data/authelia/secrets/storage_encryption_key
+openssl rand -hex 64 > data/authelia/secrets/jwt_secret
+chmod 600 data/authelia/secrets/*
+step_done "Authelia-Geheimnisse generiert"
 ((current_step++))
 
 # E-Mail-Adresse für SSL-Zertifikate
